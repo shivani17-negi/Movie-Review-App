@@ -1,4 +1,10 @@
-exports.createUser = (req,res) => {
+const User = require("../models/user");
 
-    res.send("<h1>the great<h2>");
-}; 
+exports.create = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  const newUser = new User({ name, email, password });
+  await newUser.save();
+
+  res.json({ user: newUser });
+};
