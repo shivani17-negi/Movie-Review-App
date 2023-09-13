@@ -1,4 +1,4 @@
-const nodemailer = require("nodemailer");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const EmailVerificationToken = require("../models/emailVerificationToken");
 const { isValidObjectId } = require("mongoose");
@@ -41,12 +41,13 @@ exports.create = async (req, res) => {
     `,
   });
 
-  res
-    .status(201)
-    .json({
-      message:
-        "Please verify you email. OTP has been sent to your email account!",
-    });
+  res.status(201).json({
+    user: {
+      id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+    },
+  });
 };
 
 exports.verifyEmail = async (req, res) => {
@@ -79,7 +80,14 @@ exports.verifyEmail = async (req, res) => {
     html: "<h1>Welcome to our app and thanks for choosing us.</h1>",
   });
 
-  res.json({ message: "Your email is verified." });
+  const jwtToken = jwt.sign(
+    { userId: user._id },
+    fkljffh546ahkly77777gddshjnvbm
+  );
+  res.json({
+    user: { id: user._id, name: user.name, email: user.email, token: jwtToken },
+    message: "Your email is verified.",
+  });
 };
 
 exports.resendEmailVerificationToken = async (req, res) => {
@@ -204,5 +212,23 @@ exports.resetPassword = async (req, res) => {
 
   res.json({
     message: "Password reset successfully, now you can use new password.",
+  });
+};
+
+exports.signIn = async (req, res) => {
+  const { email, password } = req.body;
+
+  const user = await User.findOne({ email });
+  if (!user) return sendError(res, "Email/Password mismatch!");
+
+  const matched = await user.comparePassword(password);
+  if (!matched) return sendError(res, "Email/Password mismatch!");
+
+  const { _id, name } = user;
+
+  const jwtToken = jwt.sign({ userId: _id }, fkljffh546ahkly77777gddshjnvbm);
+
+  res.json({
+    user: { id: _id, name, email, token: jwtToken },
   });
 };
