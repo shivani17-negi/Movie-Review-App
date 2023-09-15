@@ -1,6 +1,6 @@
 const express = require("express");
 const morgan = require("morgan");
-//require("dotenv").config();
+require("dotenv").config();
 require('express-async-errors');
 const {errorHandler} = require("./middlewares/error");
 const cors = require("cors");

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { verifyUserEmail } from "../../api/auth";
-import { useNotification } from "../../hooks";
+import { resendEmailVerificationToken, verifyUserEmail } from "../../api/auth";
+import { useAuth, useNotification } from "../../hooks";
 import { commonModalClasses } from "../../utils/theme";
 import Container from "../Container";
 import FormContainer from "../form/FormContainer";
@@ -25,6 +25,10 @@ const isValidOTP = (otp) => {
 export default function EmailVerification() {
   const [otp, setOtp] = useState(new Array(OTP_LENGTH).fill(""));
   const [activeOtpIndex, setActiveOtpIndex] = useState(0);
+
+  const { isAuth, authInfo } = useAuth();
+  const { isLoggedIn, profile } = authInfo;
+  const isVerified = profile?.isVerified;
 
   const inputRef = useRef();
   const { updateNotification } = useNotification();
@@ -55,6 +59,14 @@ export default function EmailVerification() {
     setOtp([...newOtp]);
   };
 
+  const handleOTPResend = async () => {
+    const { error, message } = await resendEmailVerificationToken(user.id);
+
+    if (error) return updateNotification("error", error);
+
+    updateNotification("success", message);
+  };
+
   const handleKeyDown = ({ key }, index) => {
     currentOTPIndex = index;
     if (key === "Backspace") {
@@ -70,13 +82,19 @@ export default function EmailVerification() {
     }
 
     // submit otp
-    const { error, message } = await verifyUserEmail({
+    const {
+      error,
+      message,
+      user: userResponse,
+    } = await verifyUserEmail({
       OTP: otp.join(""),
       userId: user.id,
     });
     if (error) return updateNotification("error", error);
 
     updateNotification("success", message);
+    localStorage.setItem("auth-token", userResponse.token);
+    isAuth();
   };
 
   useEffect(() => {
@@ -85,7 +103,8 @@ export default function EmailVerification() {
 
   useEffect(() => {
     if (!user) navigate("/not-found");
-  }, [user]);
+    if (isLoggedIn && isVerified) navigate("/");
+  }, [user, isLoggedIn, isVerified]);
 
   // if(!user) return null
 
@@ -115,8 +134,16 @@ export default function EmailVerification() {
               );
             })}
           </div>
-
-          <Submit value="Verify Account" />
+          <div>
+            <Submit value="Verify Account" />
+            <button
+              onClick={handleOTPResend}
+              type="button"
+              className="dark:text-white text-blue-500 font-semibold hover:underline mt-2"
+            >
+              I don't have OTP
+            </button>
+          </div>
         </form>
       </Container>
     </FormContainer>
