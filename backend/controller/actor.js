@@ -4,7 +4,7 @@ const {
   sendError,
   uploadImageToCloud,
   formatActor,
-} = require("../utils/helper");
+} = require("../Utils/helper");
 const cloudinary = require("../cloud");
 
 exports.createActor = async (req, res) => {
