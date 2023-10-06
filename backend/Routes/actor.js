@@ -8,10 +8,6 @@ const {
   getSingleActor,
 } = require("../controller/actor");
 const { isAuth, isAdmin } = require("../middlewares/auth");
-
-
-
-
 const { uploadImage } = require("../middlewares/multer");
 const { actorInfoValidator, validate } = require("../middlewares/validator");
 
